@@ -1,0 +1,4 @@
+interface:
+  display_name: "Motion Director"
+  short_description: "Code-driven motion film production workflow"
+  default_prompt: "Use $motion-director to produce a code-driven motion film from this brief and these source materials."
