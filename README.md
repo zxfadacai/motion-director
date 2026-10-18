@@ -1,6 +1,8 @@
 # Motion Director
 
-一个用于制作**代码驱动动效片**的 Codex Skill。它把创意 brief、分镜、风格帧、声音与时间轴、逐帧渲染、独立评审和最终交付组织成一套完整工作流。
+一个用于制作**代码驱动动效片**的通用 AI Agent Skill。它把创意 brief、分镜、风格帧、声音与时间轴、逐帧渲染、独立评审和最终交付组织成一套完整工作流。
+
+本项目不绑定具体模型或客户端。任何能够读取本地文件、执行代码、进行浏览器渲染并调用音视频工具的 Agent，都可以加载 `SKILL.md` 和 `references/motion_prompt_zh_v2.md` 来执行这套工作流。Codex 只是其中一种使用方式。
 
 适用类型：
 
@@ -30,6 +32,16 @@
 - 画面和配音中的事实必须能追溯到 `facts.json`。
 - 评审应由未参与制作的独立评审完成；环境不支持时必须明确标记为降级评审。
 
+## 兼容性
+
+- **核心格式**：Markdown 指令，不依赖特定 SDK 或运行时。
+- **通用入口**：`SKILL.md`。
+- **完整工作流**：`references/motion_prompt_zh_v2.md`。
+- **可选元数据**：`agents/openai.yaml` 仅用于 Codex 的界面展示和默认调用提示；其他 Agent 可以忽略。
+- **能力要求**：宿主 Agent 需要能读取文件、运行命令、控制浏览器渲染，并使用 `ffmpeg` 等工具处理音视频。
+
+不同 Agent 对 Skill 的发现、安装和调用方式不同。如果宿主支持自定义 Skill 目录，按该工具约定安装；如果宿主不支持自动发现，直接在对话中要求它读取本目录的 `SKILL.md` 即可。
+
 ## 目录结构
 
 ```text
@@ -43,14 +55,27 @@ motion-director/
     └── motion_prompt_zh_v2.md
 ```
 
-- `SKILL.md`：Skill 入口，定义适用范围和基线执行规则。
+- `SKILL.md`：通用 Skill 入口，定义适用范围和基线执行规则。
 - `references/motion_prompt_zh_v2.md`：原始完整制作提示词，是实际工作流的权威来源。
-- `agents/openai.yaml`：Codex 界面元数据和默认调用提示。
+- `agents/openai.yaml`：可选的 Codex 界面元数据和默认调用提示。
 - `README.md`：项目说明、安装和调用方式。
 
 ## 安装
 
-将整个 `motion-director` 文件夹放入 Codex skills 目录：
+### 通用安装
+
+将整个 `motion-director` 文件夹放入宿主 Agent 约定的 Skill 或指令目录，并保持目录名与 `SKILL.md` 中的 `name` 一致，即 `motion-director`。
+
+如果宿主没有 Skill 发现机制，把文件夹放在项目中，并在任务开始时明确要求 Agent 先读取：
+
+```text
+motion-director/SKILL.md
+motion-director/references/motion_prompt_zh_v2.md
+```
+
+### Codex 示例
+
+将文件夹放入 Codex skills 目录：
 
 ```text
 ~/.codex/skills/motion-director/
@@ -62,28 +87,27 @@ Windows 默认位置：
 C:\Users\<用户名>\.codex\skills\motion-director\
 ```
 
-目录名必须与 `SKILL.md` 中的 `name` 一致，即 `motion-director`。
-
 如果设置了 `CODEX_HOME`，则放入：
 
 ```text
 $CODEX_HOME/skills/motion-director/
 ```
 
-安装后重启或重新加载 Codex，使 Skill 被重新发现。
+安装后重启或重新加载 Codex，使 Skill 被重新发现。其他支持自动 Skill 发现的 Agent，按各自的目录规范安装即可。
 
 ## 调用
 
-显式调用：
+通用调用方式：
 
 ```text
-$motion-director
+使用 motion-director 完成以下动效片任务。
+先读取 SKILL.md 和 references/motion_prompt_zh_v2.md，再按其中的流程和质量标准执行。
 ```
 
 最小 brief 示例：
 
 ```text
-$motion-director
+使用 motion-director 执行以下任务。
 
 mode: product
 subject: [产品链接或主题]
@@ -100,6 +124,14 @@ autonomy: gated
 toolchain: HTML
 sign-off: [结尾标识和行动号召]
 ```
+
+在 Codex 中，可以将第一行替换为显式调用：
+
+```text
+$motion-director
+```
+
+其他 Agent 如果不支持 `$skill-name` 语法，只需在消息中写明 `motion-director` 的目录或附上 `SKILL.md`，并给出同一份 brief。
 
 字段说明：
 
@@ -122,7 +154,7 @@ sign-off: [结尾标识和行动号召]
 
 ## 工作流
 
-Skill 会按照原始提示词执行：
+Agent 会按照原始提示词执行：
 
 1. 锁定事实并建立 `facts.json`
 2. 研究参考作品和观众语境
@@ -133,7 +165,7 @@ Skill 会按照原始提示词执行：
 7. 构建、渲染和评审
 8. 交付成片与制作资料
 
-当 `autonomy` 为 `gated` 时，需要在 `◆` 检查点等待确认；为 `unattended` 时由 Skill 自行决策并继续。
+当 `autonomy` 为 `gated` 时，需要在 `◆` 检查点等待确认；为 `unattended` 时由 Agent 自行决策并继续。
 
 ## 预期交付物
 
@@ -159,7 +191,18 @@ Skill 会按照原始提示词执行：
 
 ## 验证
 
-结构校验命令（需要 Python 和 `skill-creator`）：
+### 通用检查
+
+确认以下内容存在且可读：
+
+- `SKILL.md` 包含 `name: motion-director` 和 `description`
+- `references/motion_prompt_zh_v2.md` 存在
+- 宿主 Agent 能访问项目目录
+- 渲染环境具备浏览器和 `ffmpeg` 等所需能力
+
+### Codex 可选校验
+
+如果使用 Codex 和 `skill-creator`，可以运行结构校验：
 
 ```powershell
 python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" .
@@ -171,7 +214,7 @@ python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" 
 Skill is valid!
 ```
 
-该检查只验证 Skill 结构、frontmatter 和占位符，不验证成片质量。
+该检查只验证 Codex Skill 的结构、frontmatter 和占位符，不验证成片质量，也不是其他 Agent 的使用前提。
 
 ## 注意事项
 
