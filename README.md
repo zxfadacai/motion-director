@@ -226,4 +226,6 @@ Skill is valid!
 
 ## License
 
-本仓库尚未声明开源许可证。公开发布前，请确认 `references/motion_prompt_zh_v2.md` 的版权和再分发权利，并根据需要补充 `LICENSE`。
+本仓库采用 [MIT License](LICENSE)。
+
+`references/motion_prompt_zh_v2.md` 为原始提示词，MIT 许可同时覆盖它；如果你把第三方内容合并进本仓库，请自行确认相应授权。
